@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Beispiel: Fahrradkarte einbinden</title>
+  <style>
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #24303c; }
+    header { padding: 20px 24px; background: #e4572e; color: #fff; }
+    header h1 { margin: 0; font-size: 20px; }
+    header p { margin: 4px 0 0; font-size: 13px; opacity: .9; }
+    main { padding: 24px; }
+    .frame { border: 1px solid #dde3e8; border-radius: 12px; overflow: hidden; box-shadow: 0 6px 24px rgba(25,40,55,.1); }
+    iframe { display: block; width: 100%; height: 70vh; min-height: 500px; border: 0; }
+    code { background: #f1f4f6; padding: 2px 5px; border-radius: 4px; font-size: 12px; }
+    pre { background: #24303c; color: #e8eef3; padding: 14px; border-radius: 10px; overflow-x: auto; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Meine Website</h1>
+    <p>So sieht die eingebundene Fahrradkarte aus.</p>
+  </header>
+  <main>
+    <div class="frame">
+      <iframe src="index.html" title="Fahrradkarte Sachsen-Anhalt Süd" loading="lazy" allowfullscreen></iframe>
+    </div>
+
+    <h2>Einbindungs-Code</h2>
+    <p>Für eine andere Seite die <code>src</code>-URL auf die WLAN-Adresse des Macs setzen:</p>
+    <pre>&lt;iframe src="http://192.168.178.135:8000/index.html"
+        width="100%" height="600"
+        style="border:0; border-radius:12px;"
+        title="Fahrradkarte" loading="lazy"&gt;&lt;/iframe&gt;</pre>
+  </main>
+</body>
+</html>

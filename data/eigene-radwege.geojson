@@ -1,0 +1,8 @@
+{
+  "type": "FeatureCollection",
+  "name": "Eigene Radwege",
+  "metadata": {
+    "hinweis": "Hier eigene Routen eintragen. Jede Route ist ein Feature vom Typ LineString. Beispiele stehen in README.md. Änderungen an dieser Datei erscheinen auf allen Geräten nach einem Reload."
+  },
+  "features": []
+}

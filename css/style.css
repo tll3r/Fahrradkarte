@@ -1,0 +1,705 @@
+:root {
+  --accent: #e4572e;
+  --accent-dark: #c1440e;
+  --ink: #24303c;
+  --muted: #6b7a88;
+  --line: #e3e8ec;
+  --bg: rgba(255, 255, 255, 0.96);
+  --shadow: 0 6px 24px rgba(25, 40, 55, 0.18);
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--ink);
+  background: #e8ecef;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#map { width: 100%; height: 100%; }
+/* Leaflet übernimmt Gesten selbst; browser-seitiges Panning würde Pinch-Zoom und Linien-Drag stören. */
+#map, .leaflet-container, .leaflet-container.route-dragging { touch-action: none; }
+
+/* ---------- Panel ---------- */
+.panel {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: 320px;
+  max-width: calc(100% - 28px);
+  max-height: calc(100% - 28px);
+  background: var(--bg);
+  backdrop-filter: blur(8px);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel[hidden] { display: none; }
+
+.panel-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.panel-head h1 { margin: 0; font-size: 17px; letter-spacing: -0.2px; }
+.subtitle { margin: 3px 0 0; font-size: 11px; color: var(--muted); line-height: 1.35; }
+
+.icon-btn {
+  border: 0;
+  background: #f0f3f5;
+  color: var(--muted);
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 14px;
+  flex: none;
+}
+.icon-btn:hover { background: #e4e9ec; color: var(--ink); }
+
+.panel-body { padding: 12px 16px 14px; overflow-y: auto; overscroll-behavior: contain; }
+.panel-body section { margin-top: 16px; }
+.panel-body h2, .suggestions h3 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.count {
+  background: #eef1f3;
+  color: var(--muted);
+  border-radius: 10px;
+  padding: 1px 6px;
+  font-size: 10px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ---------- Suche ---------- */
+.search-wrap { position: relative; }
+#search, .ed-label input, .endpoint input {
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  font-size: 13px;
+  outline: none;
+  background: #fff;
+  color: var(--ink);
+}
+#search:focus, .ed-label input:focus, .endpoint input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(228, 87, 46, 0.12);
+}
+.search-results, .geo-results {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  box-shadow: var(--shadow);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 20;
+}
+.geo-results { position: relative; top: 2px; margin-bottom: 5px; max-height: 150px; }
+.search-results button, .geo-results button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: none;
+  padding: 9px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  border-bottom: 1px solid #f1f3f5;
+  line-height: 1.3;
+}
+.search-results button:hover, .geo-results button:hover { background: #fdf3ef; }
+.search-results .kind { color: var(--muted); font-size: 10px; margin-left: 6px; }
+.search-results .empty, .geo-results .empty { padding: 9px; font-size: 11px; color: var(--muted); }
+
+/* ---------- Filter ---------- */
+.filters { display: flex; flex-direction: column; gap: 2px; }
+.filters-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px; }
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  padding: 5px 2px;
+  cursor: pointer;
+  border-radius: 6px;
+  user-select: none;
+}
+.filter-item:hover { background: #f5f7f8; }
+.filter-item input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; cursor: pointer; flex: none; }
+.swatch { width: 18px; height: 4px; border-radius: 3px; flex: none; }
+.swatch.poi { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; }
+.filter-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.filter-count { color: #9aa6b1; font-size: 10px; }
+
+/* ---------- Eigene Radwege ---------- */
+.own-way-list { display: flex; flex-direction: column; gap: 4px; margin-top: 7px; }
+.own-way-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f6f8f9;
+  border-radius: 8px;
+  padding: 6px 7px;
+  font-size: 12px;
+}
+.own-way-item .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.own-way-item .meta { font-size: 10px; color: var(--muted); flex: none; }
+.own-way-empty { font-size: 11px; color: var(--muted); padding: 4px 0; }
+.own-way-item .del-way {
+  flex: none;
+  width: 28px; height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.own-way-item .del-way:hover { background: #fdecea; border-color: #f5c6c0; color: #c0392b; }
+.clear-ways { margin-top: 8px; font-size: 11px; }
+
+/* ---------- Buttons ---------- */
+.btn-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.btn {
+  flex: 1;
+  min-height: 38px;
+  padding: 8px 9px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.btn:hover { border-color: #c9d2d9; background: #f8fafb; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+.btn.ghost { width: 100%; color: var(--muted); background: transparent; border-style: dashed; }
+.btn.wide { width: 100%; }
+.btn.tiny { flex: none; min-height: 30px; padding: 4px 8px; font-size: 11px; }
+.btn.active { background: #2d7ff9; border-color: #2d7ff9; color: #fff; }
+
+.panel-foot {
+  margin-top: 16px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: 10px;
+  color: var(--muted);
+}
+.panel-foot a { color: var(--muted); }
+
+.panel-open {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 1000;
+  background: var(--bg);
+  border: 0;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  padding: 11px 15px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  color: var(--ink);
+}
+
+/* ---------- Radweg-Editor ---------- */
+.editor {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 360px;
+  max-width: calc(100% - 28px);
+  max-height: calc(100% - 28px);
+  background: var(--bg);
+  backdrop-filter: blur(8px);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  z-index: 1100;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.editor-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  flex: none;
+}
+.editor-head strong { font-size: 15px; display: block; }
+.editor-head small { display: block; font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+.editor-compact { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 400; }
+.editor-body { padding: 12px 14px 16px; overflow-y: auto; overscroll-behavior: contain; }
+
+/* Eingeklappt: nur noch eine schmale Leiste – die Karte bleibt voll nutzbar */
+.editor.collapsed { max-height: none; }
+.editor.collapsed .editor-body,
+.editor.collapsed .editor-head small { display: none; }
+.editor.collapsed .editor-head { border-bottom: 0; padding: 8px 14px; align-items: center; }
+.editor.collapsed .editor-head strong { font-size: 13px; }
+
+.ed-label { display: block; font-size: 10.5px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 10px; }
+.ed-label input { display: block; margin-top: 4px; text-transform: none; letter-spacing: 0; font-size: 13px; color: var(--ink); }
+
+.endpoint-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.endpoint { position: relative; min-width: 0; }
+.endpoint-title { font-size: 11px; font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.dot.start { background: #27ae60; }
+.dot.end { background: #e74c3c; }
+.endpoint-picked { display: flex; align-items: center; gap: 4px; margin-top: 5px; }
+.endpoint-picked span { flex: 1; font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.muted { color: var(--muted); }
+.set { color: var(--ink); font-weight: 600; }
+
+.track-info {
+  background: #eef5fb;
+  color: #22506e;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  margin: 4px 0 10px;
+}
+.label-hint { text-transform: none; letter-spacing: 0; color: #9aa6b1; font-weight: 400; }
+.point-list { display: flex; flex-direction: column; gap: 3px; margin: 5px 0 2px; }
+.point-empty { font-size: 10.5px; color: var(--muted); padding: 4px 2px; }
+.point-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #f6f8f9;
+  border-radius: 7px;
+  padding: 4px 6px;
+  font-size: 11px;
+}
+.point-nr {
+  width: 19px; height: 19px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: grid; place-items: center;
+  font-size: 10px; font-weight: 700;
+  flex: none;
+}
+.point-row .ptxt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.point-row .pcoord { color: var(--muted); font-size: 9px; flex: none; }
+.mv-btn {
+  flex: none;
+  width: 26px; height: 26px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--ink);
+  font-size: 11px;
+  cursor: pointer;
+}
+.mv-btn:hover:not(:disabled) { background: #f0f3f5; }
+.mv-btn:disabled { opacity: .35; cursor: default; }
+.editor-actions { display: flex; gap: 6px; margin-bottom: 10px; }
+.editor-help { font-size: 10.5px; color: var(--muted); line-height: 1.5; margin: 12px 0 0; }
+.editor-help kbd { background: #eef1f3; border-radius: 4px; padding: 0 4px; font-size: 10px; }
+
+.suggestions { border-top: 1px solid var(--line); padding-top: 10px; }
+.suggestions h3 { margin-bottom: 6px; }
+#ed-suggest-count { background: #eef1f3; border-radius: 10px; padding: 1px 6px; font-size: 10px; }
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 3px;
+  font-size: 11.5px;
+  border-bottom: 1px solid #f2f4f5;
+  cursor: pointer;
+}
+.suggestion-item input { width: 19px; height: 19px; accent-color: var(--accent); margin: 0; flex: none; }
+.suggestion-item .ico { font-size: 15px; flex: none; }
+.suggestion-item .txt { flex: 1; min-width: 0; }
+.suggestion-item .txt b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.suggestion-item .txt small { color: var(--muted); font-size: 10px; }
+.suggestion-item .dist { color: var(--muted); font-size: 10px; flex: none; }
+
+/* ---------- Dialog ---------- */
+.dialog-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(20, 30, 40, 0.35);
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+}
+.dialog {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+  padding: 18px;
+  width: min(360px, 100%);
+}
+.dialog h2 { margin: 0 0 14px; font-size: 16px; }
+.dialog label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 10px; }
+.dialog input, .dialog select, .dialog textarea {
+  width: 100%;
+  margin-top: 4px;
+  padding: 9px;
+  font-size: 14px;
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  outline: none;
+  font-family: inherit;
+}
+.dialog input:focus, .dialog select:focus, .dialog textarea:focus { border-color: var(--accent); }
+.dialog-actions { display: flex; gap: 8px; margin-top: 14px; }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #24303c;
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-size: 12px;
+  box-shadow: var(--shadow);
+  z-index: 3000;
+  max-width: 80%;
+  text-align: center;
+}
+
+/* ---------- Leaflet ---------- */
+.leaflet-container { font-family: inherit; }
+.leaflet-control-zoom { border: none !important; box-shadow: var(--shadow) !important; }
+.leaflet-control-zoom a { color: var(--ink) !important; width: 34px; height: 34px; line-height: 34px; font-size: 18px; }
+.leaflet-control-attribution { font-size: 9px !important; background: rgba(255,255,255,0.8) !important; }
+.leaflet-popup-content-wrapper { border-radius: 10px; box-shadow: var(--shadow); }
+.leaflet-popup-content { font-size: 12px; margin: 10px 12px; }
+.popup-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+.popup-meta { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.popup-meta a { color: var(--accent); }
+.popup-note { margin-top: 6px; font-size: 11px; font-style: italic; }
+.popup-pois { margin-top: 8px; padding-top: 7px; border-top: 1px solid var(--line); font-size: 11px; }
+.popup-pois b { display: block; margin-bottom: 3px; }
+.popup-pois span { display: block; color: var(--muted); }
+
+.poi-icon, .vertex-icon, .route-poi-icon { background: transparent; border: none; }
+.poi-icon span {
+  display: grid; place-items: center;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid currentColor;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  font-size: 13px; line-height: 1;
+}
+.vertex-icon span {
+  display: grid; place-items: center;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #2d7ff9;
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  font-size: 10px; font-weight: 700;
+}
+.vertex-icon.first span { background: #27ae60; }
+.vertex-icon.last span { background: #e74c3c; }
+.route-poi-icon span {
+  display: grid; place-items: center;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #ffd166;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  font-size: 11px;
+}
+
+/* ---------- Routen-Farbe, Radtyp, POI-Zuordnung ---------- */
+.bike-filter {
+  width: 100%;
+  margin: 6px 0 8px;
+  padding: 8px 9px;
+  font-size: 12px;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.own-way-item .color-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #ccd4da;
+  padding: 0;
+  cursor: pointer;
+  flex: none;
+}
+.own-way-item .color-dot::-webkit-color-swatch-wrapper { padding: 0; }
+.own-way-item .color-dot::-webkit-color-swatch { border: none; border-radius: 50%; }
+.own-way-item .bike-mini { font-size: 10px; color: var(--muted); flex: none; }
+
+.color-row { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
+#ed-color {
+  width: 38px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #fff;
+  cursor: pointer;
+  flex: none;
+}
+#ed-color::-webkit-color-swatch-wrapper { padding: 0; }
+#ed-color::-webkit-color-swatch { border: none; border-radius: 5px; }
+.color-swatches { display: flex; flex-wrap: wrap; gap: 5px; }
+.swatch-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px #cbd3d9;
+  cursor: pointer;
+  padding: 0;
+}
+.swatch-btn.selected { box-shadow: 0 0 0 2px var(--ink); }
+
+.bike-options { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.bike-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #fff;
+  font-size: 11px;
+  cursor: pointer;
+  user-select: none;
+}
+.bike-chip input { position: absolute; opacity: 0; pointer-events: none; }
+.bike-chip.active { background: #fff1eb; border-color: var(--accent); color: var(--accent-dark); font-weight: 700; }
+
+.suggest-type-filter { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.type-chip {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  font-size: 10.5px;
+  cursor: pointer;
+}
+.type-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.assign-poi-name { font-size: 12px; color: var(--muted); margin: -6px 0 12px; }
+.assign-way-list { max-height: 45vh; overflow-y: auto; }
+.assign-way-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 4px;
+  border-bottom: 1px solid #f1f3f5;
+  font-size: 12px;
+  cursor: pointer;
+}
+.assign-way-item input { width: 20px; height: 20px; accent-color: var(--accent); margin: 0; flex: none; }
+.assign-way-item .color-dot { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+.assign-way-item .txt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.assign-way-item .cnt { color: var(--muted); font-size: 10px; flex: none; }
+.assign-empty { font-size: 12px; color: var(--muted); padding: 10px 0; }
+
+.popup-action {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: var(--accent);
+  color: #fff;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.popup-action:hover { background: var(--accent-dark); }
+
+/* ---------- Regions-Schalter und Touren-Panel ---------- */
+.panel-head .icon-btn { width: 28px; height: 28px; font-size: 12px; }
+.switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 2px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.switch-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.switch-text b { font-weight: 600; }
+.switch-text small { color: var(--muted); font-size: 10px; }
+.switch-row input { position: absolute; opacity: 0; width: 0; height: 0; }
+.switch {
+  width: 40px; height: 22px;
+  border-radius: 12px;
+  background: #cbd3d9;
+  position: relative;
+  flex: none;
+  transition: background .18s ease;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .25);
+  transition: transform .18s ease;
+}
+.switch-row input:checked + .switch { background: var(--accent); }
+.switch-row input:checked + .switch::after { transform: translateX(18px); }
+.switch-row input:focus-visible + .switch { outline: 2px solid var(--accent-dark); outline-offset: 2px; }
+
+/* Der Cursor wird in editor.js am Karten-Container gesetzt (preferCanvas: true =>
+   keine SVG-Klasse). Hier absichtlich keine wirkungslosen .route-drag-line-Regeln. */
+
+.tour-open { left: 132px; }
+.region-label span {
+  display: inline-block;
+  padding: 4px 9px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .9);
+  border: 1px solid #d5dce1;
+  color: #55636f;
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(25, 40, 55, .12);
+}
+
+/* ---------- Handy / Touch ---------- */
+@media (max-width: 700px) {
+  .panel {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 52vh;
+    border-radius: 18px 18px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .panel-head { padding: 16px 16px 12px; position: relative; }
+  .panel-head::before {
+    content: '';
+    position: absolute;
+    top: 6px; left: 50%;
+    transform: translateX(-50%);
+    width: 36px; height: 4px;
+    border-radius: 3px;
+    background: #d5dce1;
+  }
+  .panel-body { padding: 10px 14px 20px; }
+  .panel-open { top: auto; bottom: 14px; left: 14px; min-height: 44px; }
+  .tour-open { left: 126px; }
+  .filters-grid { grid-template-columns: 1fr; }
+  .btn { min-height: 44px; font-size: 12.5px; }
+  .btn.tiny { min-height: 38px; font-size: 12px; }
+  .filter-item { padding: 8px 3px; font-size: 12.5px; }
+  .filter-item input { width: 22px; height: 22px; }
+  #search { min-height: 44px; font-size: 15px; }
+
+  .editor {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 78vh;
+    border-radius: 18px 18px 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .editor-head { padding: 16px 16px 12px; }
+  .editor-head .icon-btn { width: 38px; height: 38px; }
+  .editor.collapsed .editor-head { padding: 8px 16px; }
+  .editor-body { padding: 12px 16px 22px; }
+  .endpoint-grid { grid-template-columns: 1fr; gap: 12px; }
+  .endpoint input, .ed-label input { min-height: 44px; font-size: 15px; }
+  .geo-results { max-height: 130px; }
+  .suggestion-item { padding: 10px 3px; }
+  .suggestion-item input { width: 24px; height: 24px; }
+  .own-way-item .del-way { width: 38px; height: 38px; font-size: 15px; }
+  .point-row { padding: 6px; font-size: 12px; }
+  .mv-btn { width: 36px; height: 36px; font-size: 14px; }
+  .pcoord { font-size: 10px; }
+  .bike-filter { min-height: 44px; font-size: 14px; }
+  .bike-chip { padding: 9px 12px; font-size: 12px; }
+  .type-chip { padding: 8px 12px; font-size: 12px; }
+  .swatch-btn { width: 32px; height: 32px; }
+  #ed-color { width: 46px; height: 40px; }
+  .assign-way-item { padding: 13px 4px; }
+  .assign-way-item input { width: 24px; height: 24px; }
+  .editor-help { font-size: 11px; }
+
+  .dialog-backdrop { align-items: end; padding: 0; }
+  .dialog {
+    width: 100%;
+    border-radius: 18px 18px 0 0;
+    padding: 20px 18px calc(22px + env(safe-area-inset-bottom));
+  }
+  .dialog input, .dialog select, .dialog textarea { font-size: 16px; min-height: 44px; }
+  .toast { bottom: 12px; max-width: 92%; }
+  /* Attribution muss auch mobil sichtbar bleiben (ODbL-/Tile-Bedingungen), nur kompakt. */
+  .leaflet-control-attribution {
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+    max-width: 65vw;
+    padding: 0 4px !important;
+    opacity: .85;
+  }
+  .leaflet-control-attribution a { color: #5a6874; }
+}
+
+@media (max-width: 380px) {
+  .subtitle { font-size: 10px; }
+  .editor-actions { flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .panel, .editor { transition: transform .18s ease; }
+}

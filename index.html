@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Fahrradkarte · Sachsen-Anhalt Süd</title>
+  <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="map" aria-label="Interaktive Fahrradkarte"></div>
+
+<!-- Filter-Panel links (auf dem Handy: unten) -->
+<aside id="panel" class="panel">
+  <header class="panel-head">
+    <div>
+      <h1>🚲 Fahrradkarte</h1>
+      <p class="subtitle">Bad Schmiedeberg – Wittenberg – Kemberg</p>
+    </div>
+    <button id="to-tour" class="icon-btn" title="Touren planen" aria-label="Touren planen">🧭</button>
+    <button id="panel-toggle" class="icon-btn" title="Panel schließen" aria-label="Panel schließen">✕</button>
+  </header>
+
+  <div class="panel-body">
+    <div class="search-wrap">
+      <input id="search" type="search" placeholder="Weg oder POI suchen …" autocomplete="off" aria-label="Suche">
+      <div id="search-results" class="search-results" hidden></div>
+    </div>
+
+    <section>
+      <h2>Region</h2>
+      <label class="switch-row" for="region-toggle">
+        <span class="switch-text"><b>30 km um Bad Schmiedeberg</b><small>Kartenausschnitt hervorheben</small></span>
+        <input type="checkbox" id="region-toggle" checked>
+        <span class="switch"></span>
+      </label>
+    </section>
+
+    <section>
+      <h2>Radwege <span class="count" id="count-ways">–</span></h2>
+      <div id="way-filters" class="filters"></div>
+    </section>
+
+    <section>
+      <h2>POIs <span class="count" id="count-pois">–</span></h2>
+      <div id="poi-filters" class="filters filters-grid"></div>
+    </section>
+
+    <footer class="panel-foot">
+      Daten: <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL) ·
+      Karte: <a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>
+    </footer>
+  </div>
+</aside>
+
+<!-- Tourenplanen: eigenes Panel, getrennt von den Filtern -->
+<aside id="tour-panel" class="panel" hidden>
+  <header class="panel-head">
+    <div>
+      <h1>🧭 Touren planen</h1>
+      <p class="subtitle">Eigene Routen und POIs verwalten</p>
+    </div>
+    <button id="to-filter" class="icon-btn" title="Zu den Filtern" aria-label="Zu den Filtern">☰</button>
+    <button id="tour-toggle" class="icon-btn" title="Panel schließen" aria-label="Panel schließen">✕</button>
+  </header>
+
+  <div class="panel-body">
+    <section>
+      <h2>Eigene Radwege <span class="count" id="count-own">0</span></h2>
+      <button id="btn-new-way" class="btn primary wide">➕ Radweg anlegen</button>
+      <select id="bike-filter" class="bike-filter" aria-label="Eigene Routen nach Radtyp filtern">
+        <option value="">Alle Radtypen</option>
+      </select>
+      <div id="own-way-list" class="own-way-list"></div>
+      <button id="btn-clear-ways" class="btn ghost wide clear-ways">🗑️ Alle Routen löschen</button>
+    </section>
+
+    <section>
+      <h2>Weitere Daten</h2>
+      <div class="btn-row">
+        <button id="btn-add-poi" class="btn">📍 POI setzen</button>
+        <button id="btn-import" class="btn">📥 Import</button>
+      </div>
+      <div class="btn-row">
+        <button id="btn-export" class="btn">📤 Export</button>
+        <button id="btn-reset" class="btn ghost">Eigene löschen</button>
+      </div>
+      <input id="file-input" type="file" accept=".geojson,.json,application/geo+json,application/json" hidden>
+    </section>
+  </div>
+</aside>
+
+<button id="panel-open" class="panel-open" hidden aria-label="Filter öffnen">☰ Filter</button>
+<button id="tour-panel-open" class="panel-open tour-open" hidden aria-label="Touren planen öffnen">🧭 Touren</button>
+
+<!-- Radweg-Editor: liegt über der Karte, lässt aber Klicks auf die Karte zu -->
+<section id="editor" class="editor" hidden aria-label="Radweg-Editor">
+  <header class="editor-head">
+    <div>
+      <strong id="editor-title">Neuer Radweg</strong>
+      <small id="editor-subtitle">Start, Ziel und Abschnitte festlegen</small>
+      <span id="editor-compact" class="editor-compact" hidden></span>
+    </div>
+    <button id="editor-min" class="icon-btn" title="Editor einklappen" aria-label="Editor einklappen">▾</button>
+    <button id="editor-close" class="icon-btn" aria-label="Editor schließen">✕</button>
+  </header>
+
+  <div class="editor-body">
+    <label class="ed-label">Name des Radwegs
+      <input id="ed-name" type="text" placeholder="z. B. Runde um Bad Schmiedeberg">
+    </label>
+
+    <div class="endpoint-grid">
+      <div class="endpoint">
+        <div class="endpoint-title"><span class="dot start"></span> Start</div>
+        <input id="ed-start-search" type="search" placeholder="Adresse oder Ort" autocomplete="off">
+        <div id="ed-start-results" class="geo-results" hidden></div>
+        <div class="endpoint-picked">
+          <span id="ed-start-label" class="muted">Noch nicht gesetzt</span>
+          <button id="ed-pick-start" type="button" class="btn tiny">📍 Karte</button>
+        </div>
+      </div>
+      <div class="endpoint">
+        <div class="endpoint-title"><span class="dot end"></span> Ziel</div>
+        <input id="ed-end-search" type="search" placeholder="Adresse oder Ort" autocomplete="off">
+        <div id="ed-end-results" class="geo-results" hidden></div>
+        <div class="endpoint-picked">
+          <span id="ed-end-label" class="muted">Noch nicht gesetzt</span>
+          <button id="ed-pick-end" type="button" class="btn tiny">📍 Karte</button>
+        </div>
+      </div>
+    </div>
+
+    <label class="ed-label">Notiz (optional)
+      <input id="ed-note" type="text" placeholder="z. B. schöner Abschnitt an der Elbe">
+    </label>
+
+    <div class="ed-label">Farbe der Route
+      <div class="color-row">
+        <input id="ed-color" type="color" value="#e4572e" aria-label="Routenfarbe">
+        <div id="ed-color-swatches" class="color-swatches"></div>
+      </div>
+    </div>
+
+    <div class="ed-label">Geeignet für
+      <div id="ed-bike-types" class="bike-options"></div>
+    </div>
+
+    <div id="ed-track-info" class="track-info">Noch keine Abschnitte – auf die Karte klicken.</div>
+
+    <div class="ed-label">Reihenfolge der Punkte <span class="label-hint">▲ ▼ ändern die Reihenfolge</span>
+      <div id="ed-point-list" class="point-list"></div>
+    </div>
+
+    <div class="editor-actions">
+      <button id="ed-suggest" type="button" class="btn">✨ POIs vorschlagen</button>
+      <button id="ed-save" type="button" class="btn primary">💾 Speichern</button>
+    </div>
+
+    <div id="ed-suggestions" class="suggestions" hidden>
+      <h3>POIs entlang der Route <span id="ed-suggest-count"></span></h3>
+      <div id="ed-suggest-type-filter" class="suggest-type-filter"></div>
+      <div id="ed-suggestion-list"></div>
+    </div>
+
+    <p class="editor-help">
+      <strong>Route anpassen:</strong> Linie an beliebiger Stelle anfassen und ziehen = Punkt einfügen und verschieben · freie Kartenstelle antippen = Punkt genau dort einfügen · nummerierten Punkt ziehen = verschieben · Punkt antippen = löschen · in der Punkteliste <kbd>▲</kbd>/<kbd>▼</kbd> antippen = Reihenfolge ändern (erster Punkt = Start, letzter = Ziel).
+      <kbd>Esc</kbd> schließt den Editor.
+    </p>
+  </div>
+</section>
+
+<!-- Modal für eigene POIs -->
+<div id="dialog-backdrop" class="dialog-backdrop" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialog-title">
+    <h2 id="dialog-title">Neuer POI</h2>
+    <form id="entry-form">
+      <label>Name<br><input id="f-name" type="text" required placeholder="z. B. Trinkbrunnen am Markt"></label>
+      <label id="f-type-label">Typ<br><select id="f-type"></select></label>
+      <label>Notiz (optional)<br><textarea id="f-note" rows="2" placeholder="z. B. im Sommer geöffnet"></textarea></label>
+      <div class="dialog-actions">
+        <button type="button" id="f-cancel" class="btn">Abbrechen</button>
+        <button type="submit" class="btn primary">Speichern</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- POI einer oder mehreren eigenen Routen zuordnen -->
+<div id="assign-backdrop" class="dialog-backdrop" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="assign-title">
+    <h2 id="assign-title">POI zu Radweg hinzufügen</h2>
+    <p id="assign-poi-name" class="assign-poi-name"></p>
+    <div id="assign-way-list" class="assign-way-list"></div>
+    <div class="dialog-actions">
+      <button type="button" id="assign-cancel" class="btn">Abbrechen</button>
+      <button type="button" id="assign-save" class="btn primary">Übernehmen</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/config.js"></script>
+<!-- editor.js definiert nur die API; app.js ruft init() nach dem Laden der Daten auf. -->
+<script src="js/editor.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

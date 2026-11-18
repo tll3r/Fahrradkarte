@@ -1,0 +1,17 @@
+[out:json][timeout:180];
+// Radfreundliche Wege im Raum Bad Schmiedeberg / Wittenberg / Kemberg
+// Bounding-Box: Süd 51.55, West 12.25, Nord 51.90, Ost 12.85
+(
+  // Reine Radwege
+  way["highway"="cycleway"](51.55,12.25,51.90,12.85);
+
+  // Wege mit Radweg-Markierung (unterschiedlichste Ausprägungen)
+  way["cycleway"~"^(lane|track|shared|shared_lane|opposite|opposite_lane|opposite_track|designated|separate)$"](51.55,12.25,51.90,12.85);
+
+  // Für Fahrräder ausgewiesene Wege / Straßen
+  way["bicycle"="designated"](51.55,12.25,51.90,12.85);
+
+  // Ruhige Straßen und Wald-/Feldwege mit Fahrradfreigabe
+  way["bicycle"="yes"]["highway"~"^(residential|living_street|unclassified|service|track|path)$"](51.55,12.25,51.90,12.85);
+);
+out geom;

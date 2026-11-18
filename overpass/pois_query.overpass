@@ -1,0 +1,21 @@
+[out:json][timeout:120];
+(
+  node["amenity"="drinking_water"](51.55,12.25,51.90,12.85);
+  node["amenity"="bicycle_parking"](51.55,12.25,51.90,12.85);
+  node["amenity"="bicycle_repair_station"](51.55,12.25,51.90,12.85);
+  node["shop"="bicycle"](51.55,12.25,51.90,12.85);
+  node["tourism"="viewpoint"](51.55,12.25,51.90,12.85);
+  node["tourism"="camp_site"](51.55,12.25,51.90,12.85);
+  node["amenity"="toilets"](51.55,12.25,51.90,12.85);
+  node["amenity"="bench"](51.55,12.25,51.90,12.85);
+  node["amenity"="shelter"](51.55,12.25,51.90,12.85);
+  node["leisure"="playground"](51.55,12.25,51.90,12.85);
+  node["information"~"^(office|visitor_centre|map)$"](51.55,12.25,51.90,12.85);
+
+  // Kirchen und Kapellen
+  node["amenity"="place_of_worship"](51.55,12.25,51.90,12.85);
+  way["amenity"="place_of_worship"](51.55,12.25,51.90,12.85);
+  way["building"~"^(church|cathedral|chapel|basilica)$"](51.55,12.25,51.90,12.85);
+  node["historic"="church"](51.55,12.25,51.90,12.85);
+);
+out center;
