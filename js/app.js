@@ -301,7 +301,7 @@
     state.ownWays.concat(fileEigenWays()).filter(routeVisible).forEach((f) => {
       const color = U.safeColor(f.properties && f.properties.color, C.routeColors[0]);
       L.geoJSON(f, {
-        style: () => ({ color: color, weight: c.weight + 1, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }),
+        style: () => ({ color: color, weight: c.weight + 1, opacity: 0.95, lineCap: 'round', lineJoin: 'round', smoothFactor: 1.2 }),
         onEachFeature: (feature, layer) => bindWay(layer, feature, { weight: c.weight + 1 })
       }).addTo(wayGroups.eigen);
     });
@@ -322,7 +322,7 @@
     C.wayCategories.forEach((c) => {
       if (c.id === 'eigen' || !buckets[c.id].length) return;
       L.geoJSON({ type: 'FeatureCollection', features: buckets[c.id] }, {
-        style: () => ({ color: c.color, weight: c.weight, opacity: 0.85, lineCap: 'round' }),
+        style: () => ({ color: c.color, weight: c.weight, opacity: 0.85, lineCap: 'round', smoothFactor: 1.5 }),
         onEachFeature: (f, layer) => bindWay(layer, f, c)
       }).addTo(wayGroups[c.id]);
     });
@@ -455,8 +455,13 @@
     C.poiGroups.forEach((g) => {
       const features = buckets[g.id];
       if (!features.length) return;
+      // Canvas-Kreise statt DOM-Marker: deutlich schneller bei vielen POIs.
+      const color = U.safeColor(g.color, '#2d7ff9');
       L.geoJSON({ type: 'FeatureCollection', features: features }, {
-        pointToLayer: (f, ll) => L.marker(ll, { icon: poiIcon(g) }),
+        pointToLayer: (f, ll) => L.circleMarker(ll, {
+          radius: 6, color: '#ffffff', weight: 1.5,
+          fillColor: color, fillOpacity: 0.9
+        }),
         onEachFeature: (f, layer) => layer.bindPopup(() => popupPoi(f))
       }).addTo(poiGroups[g.id]);
     });
