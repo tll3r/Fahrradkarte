@@ -57,7 +57,6 @@ window.FK_CONFIG = {
     { id: 'information',           label: 'Information',        icon: 'ℹ️', color: '#2980b9', defaultOn: true },
     { id: 'bicycle_rental',        label: 'Verleih',            icon: '🚲', color: '#8e44ad', defaultOn: true },
     { id: 'shelter',               label: 'Unterstand',         icon: '🏠', color: '#95a5a6', defaultOn: false },
-    { id: 'bench',                 label: 'Bank',               icon: '🪑', color: '#95a5a6', defaultOn: false },
     { id: 'playground',            label: 'Spielplatz',         icon: '🧒', color: '#e67e22', defaultOn: false },
     { id: 'kirche',                label: 'Kirche',             icon: '⛪', color: '#7d3c98', defaultOn: true },
     { id: 'eigen',                 label: 'Eigene POIs',        icon: '⭐', color: '#2d7ff9', defaultOn: true }
@@ -76,7 +75,7 @@ window.FK_CONFIG = {
     // Maximale Anzahl Vorschläge
     poiSuggestLimit: 25,
     // Diese Typen werden nie als Routen-Vorschlag angeboten (zu viele Einträge / wenig Nutzen)
-    poiSuggestIgnoreTypes: ['bench', 'playground', 'shelter'],
+    poiSuggestIgnoreTypes: ['playground', 'shelter'],
     // In der Vorschlagsliste standardmäßig aktive Kategorien
     poiSuggestDefaultTypes: ['kirche', 'drinking_water', 'viewpoint', 'bicycle_parking', 'toilets', 'camp_site', 'information', 'bicycle_repair_station', 'bicycle_rental', 'eigen'],
     // Bevorzugte Kategorien stehen in der Vorschlagsliste oben

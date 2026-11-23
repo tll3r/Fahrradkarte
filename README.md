@@ -122,7 +122,7 @@ Für alle Geräte: `data/eigene-pois.geojson` und `data/eigene-radwege.geojson` 
 }
 ```
 
-POI-Typen: `kirche`, `drinking_water`, `bicycle_parking`, `viewpoint`, `toilets`, `camp_site`, `information`, `bicycle_repair_station`, `shelter`, `bench`, `eigen`, …
+POI-Typen: `kirche`, `drinking_water`, `bicycle_parking`, `viewpoint`, `toilets`, `camp_site`, `information`, `bicycle_repair_station`, `shelter`, `eigen`, …
 
 ## OSM-Daten aktualisieren
 

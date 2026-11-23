@@ -1,8 +1,1 @@
-{
-  "type": "FeatureCollection",
-  "name": "Eigene POIs",
-  "metadata": {
-    "hinweis": "Hier eigene Points of Interest eintragen. Jeder POI ist ein Feature vom Typ Point. Beispiele stehen in README.md. Änderungen an dieser Datei erscheinen auf allen Geräten nach einem Reload."
-  },
-  "features": []
-}
+{"type": "FeatureCollection", "name": "Eigene POIs", "metadata": {"hinweis": "Hier eigene Points of Interest eintragen. Jeder POI ist ein Feature vom Typ Point. Beispiele stehen in README.md. Änderungen an dieser Datei erscheinen auf allen Geräten nach einem Reload."}, "features": []}

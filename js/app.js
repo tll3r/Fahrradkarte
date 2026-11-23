@@ -73,7 +73,7 @@
 
   const state = {
     waysOsm: [], poisOsm: [], waysFile: [], poisFile: [], fernways: [],
-    ownPois: loadArr(LS_POIS), ownWays: loadArr(LS_WAYS),
+    ownPois: loadArr(LS_POIS).filter((f) => (f.properties && f.properties.typ) !== 'bench'), ownWays: loadArr(LS_WAYS),
     searchables: [], namedPois: [],
     routePoisSuppressed: false,   // Editor aktiv: gelbe App-Marker ausblenden
     routePoiCats: new Set()       // Kategorien, die tatsächlich Routen-POIs haben
@@ -158,7 +158,7 @@
 
   /* ---------------- POI-Namen und -Identität ---------------- */
   function allWays() { return state.waysOsm.concat(state.waysFile, state.fernways, state.ownWays); }
-  function allPois() { return state.poisOsm.concat(state.poisFile, state.ownPois); }
+  function allPois() { return state.poisOsm.concat(state.poisFile, state.ownPois).filter((f) => (f.properties && f.properties.typ) !== 'bench'); }
 
   // Eigene Routen aus data/eigene-radwege.geojson sind dauerhaft sichtbar,
   // bleiben aber getrennt von den bearbeitbaren localStorage-Routen.
@@ -184,7 +184,7 @@
     const c = f.geometry && f.geometry.coordinates;
     if (!c) return p.typ || 'POI';
     const group = C.poiGroups.find((g) => g.id === p.typ);
-    const base = p.typ === 'bench' ? 'Rastbank' : (group ? group.label : (p.typ || 'POI'));
+    const base = group ? group.label : (p.typ || 'POI');
     let best = null, bestDist = 250;
     state.namedPois.forEach((o) => {
       const oc = o.geometry.coordinates;

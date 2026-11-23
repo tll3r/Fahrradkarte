@@ -90,6 +90,9 @@ def poi_to_feature(el):
     ):
         typ = "kirche"
 
+    # Bänke sind keine POIs mehr (komplett entfernt)
+    if typ == "bench":
+        return None
     name = tags.get("name", "")
     if not name:
         name = {
@@ -98,7 +101,6 @@ def poi_to_feature(el):
             "bicycle_repair_station": "Reparaturstation",
             "viewpoint": "Aussichtspunkt",
             "toilets": "Toilette",
-            "bench": "Bank",
             "shelter": "Unterstand",
             "kirche": "Kirche",
         }.get(typ, typ)

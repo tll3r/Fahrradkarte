@@ -7,7 +7,6 @@
   node["tourism"="viewpoint"](51.55,12.25,51.90,12.85);
   node["tourism"="camp_site"](51.55,12.25,51.90,12.85);
   node["amenity"="toilets"](51.55,12.25,51.90,12.85);
-  node["amenity"="bench"](51.55,12.25,51.90,12.85);
   node["amenity"="shelter"](51.55,12.25,51.90,12.85);
   node["leisure"="playground"](51.55,12.25,51.90,12.85);
   node["information"~"^(office|visitor_centre|map)$"](51.55,12.25,51.90,12.85);
