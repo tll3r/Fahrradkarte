@@ -47,19 +47,19 @@ window.FK_CONFIG = {
 
   // POI-Gruppen. `id` entspricht dem Feld `typ` in den GeoJSON-Dateien.
   poiGroups: [
-    { id: 'drinking_water',        label: 'Trinkbrunnen',       icon: '💧', color: '#2f80ed', defaultOn: true },
-    { id: 'bicycle_parking',       label: 'Fahrradparken',      icon: '🅿️', color: '#3d7cf3', defaultOn: true },
-    { id: 'bicycle_repair_station',label: 'Reparaturstation',   icon: '🔧', color: '#d35400', defaultOn: true },
-    { id: 'bicycle',               label: 'Fahrradladen',       icon: '🚲', color: '#8e44ad', defaultOn: true },
+    { id: 'drinking_water',        label: 'Trinkbrunnen',       icon: '💧', color: '#2f80ed', defaultOn: false },
+    { id: 'bicycle_parking',       label: 'Fahrradparken',      icon: '🅿️', color: '#3d7cf3', defaultOn: false },
+    { id: 'bicycle_repair_station',label: 'Reparaturstation',   icon: '🔧', color: '#d35400', defaultOn: false },
+    { id: 'bicycle',               label: 'Fahrradladen',       icon: '🚲', color: '#8e44ad', defaultOn: false },
     { id: 'viewpoint',             label: 'Aussichtspunkt',     icon: '🔭', color: '#16a085', defaultOn: true },
-    { id: 'toilets',               label: 'Toilette',           icon: '🚻', color: '#7f8c8d', defaultOn: true },
-    { id: 'camp_site',             label: 'Camping',            icon: '🏕️', color: '#27ae60', defaultOn: true },
-    { id: 'information',           label: 'Information',        icon: 'ℹ️', color: '#2980b9', defaultOn: true },
-    { id: 'bicycle_rental',        label: 'Verleih',            icon: '🚲', color: '#8e44ad', defaultOn: true },
+    { id: 'toilets',               label: 'Toilette',           icon: '🚻', color: '#7f8c8d', defaultOn: false },
+    { id: 'camp_site',             label: 'Camping',            icon: '🏕️', color: '#27ae60', defaultOn: false },
+    { id: 'information',           label: 'Information',        icon: 'ℹ️', color: '#2980b9', defaultOn: false },
+    { id: 'bicycle_rental',        label: 'Verleih',            icon: '🚲', color: '#8e44ad', defaultOn: false },
     { id: 'shelter',               label: 'Unterstand',         icon: '🏠', color: '#95a5a6', defaultOn: false },
     { id: 'playground',            label: 'Spielplatz',         icon: '🧒', color: '#e67e22', defaultOn: false },
     { id: 'kirche',                label: 'Kirche',             icon: '⛪', color: '#7d3c98', defaultOn: true },
-    { id: 'eigen',                 label: 'Eigene POIs',        icon: '⭐', color: '#2d7ff9', defaultOn: true }
+    { id: 'eigen',                 label: 'Eigene POIs',        icon: '⭐', color: '#2d7ff9', defaultOn: false }
   ],
 
   // Einstellungen für den Radweg-Editor
