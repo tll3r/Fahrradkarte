@@ -319,6 +319,7 @@
       state.routePoiCats.add((f.properties && f.properties.kategorie) || 'eigen');
       pois.forEach((p) => {
         if (!p || typeof p.lat !== 'number' || typeof p.lng !== 'number') return;
+        if (regionFilterActive() && map.distance([p.lat, p.lng], C.region.center) > C.region.radius) return;
         const m = L.marker([p.lat, p.lng], {
           icon: L.divIcon({
             className: 'route-poi-icon',
@@ -485,6 +486,7 @@
     const buckets = {};
     C.poiGroups.forEach((g) => { buckets[g.id] = []; });
     allPois().forEach((f) => {
+      if (!poiInRegion(f)) return;
       let key = (f.properties && f.properties.typ) || 'eigen';
       if (!buckets[key]) key = 'eigen';
       buckets[key].push(f);
@@ -576,7 +578,7 @@
   /* ---------------- Suche ---------------- */
   function buildSearchIndex() {
     state.searchables = [];
-    allWays().concat(allPois()).forEach((f) => {
+    allWays().concat(allPois().filter(poiInRegion)).forEach((f) => {
       const name = f.properties?.name;
       if (!name) return;
       const g = f.geometry;
@@ -763,9 +765,28 @@
   } else {
     $('region-toggle').closest('.switch-row').hidden = true;
   }
+
+  function regionFilterActive() {
+    return !!(C.region && $('region-toggle').checked);
+  }
+  function poiInRegion(f) {
+    if (!regionFilterActive()) return true;
+    const c = f && f.geometry && f.geometry.coordinates;
+    if (!Array.isArray(c)) return true;
+    const lat = (f.geometry.type === 'Point') ? c[1] : (Array.isArray(c[0]) ? c[Math.floor(c.length / 2)][1] : c[1]);
+    const lng = (f.geometry.type === 'Point') ? c[0] : (Array.isArray(c[0]) ? c[Math.floor(c.length / 2)][0] : c[0]);
+    if (typeof lat !== 'number' || typeof lng !== 'number') return true;
+    return map.distance([lat, lng], C.region.center) <= C.region.radius;
+  }
+
   $('region-toggle').addEventListener('change', (e) => {
     if (e.target.checked) { if (!map.hasLayer(regionLayer)) regionLayer.addTo(map); }
     else if (map.hasLayer(regionLayer)) map.removeLayer(regionLayer);
+    // POI-Bestand an den Kreis koppeln: nur innerhalb sichtbar, wenn der Kreis aktiv ist.
+    renderPois();
+    renderRoutePois();
+    buildSearchIndex();
+    applyFilters();
   });
 
   /* ---------------- Eigene POIs ---------------- */
