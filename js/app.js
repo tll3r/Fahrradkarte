@@ -442,11 +442,19 @@
     toast('Alle eigenen Routen gelöscht.');
   });
 
+  function poiInView(f) {
+    const c = f && f.geometry && f.geometry.coordinates;
+    if (!Array.isArray(c)) return true;
+    const b = map.getBounds().pad(0.25);
+    return b.contains(L.latLng(c[1], c[0]));
+  }
+
   function renderPois() {
     Object.values(poiGroups).forEach((g) => g.clearLayers());
     const buckets = {};
     C.poiGroups.forEach((g) => { buckets[g.id] = []; });
     allPois().forEach((f) => {
+      if (!poiInView(f)) return;
       let key = (f.properties && f.properties.typ) || 'eigen';
       if (!buckets[key]) key = 'eigen';
       buckets[key].push(f);
@@ -455,13 +463,8 @@
     C.poiGroups.forEach((g) => {
       const features = buckets[g.id];
       if (!features.length) return;
-      // Canvas-Kreise statt DOM-Marker: deutlich schneller bei vielen POIs.
-      const color = U.safeColor(g.color, '#2d7ff9');
       L.geoJSON({ type: 'FeatureCollection', features: features }, {
-        pointToLayer: (f, ll) => L.circleMarker(ll, {
-          radius: 6, color: '#ffffff', weight: 1.5,
-          fillColor: color, fillOpacity: 0.9
-        }),
+        pointToLayer: (f, ll) => L.marker(ll, { icon: poiIcon(g) }),
         onEachFeature: (f, layer) => layer.bindPopup(() => popupPoi(f))
       }).addTo(poiGroups[g.id]);
     });
@@ -538,6 +541,13 @@
   $('bike-filter').addEventListener('change', () => {
     renderOwnWaysOnly();
     renderOwnWayList();
+  });
+
+  // POIs nur im sichtbaren Ausschnitt rendern (Icons bleiben, aber weniger DOM-Marker).
+  let poiRenderTimer = null;
+  map.on('moveend zoomend', () => {
+    clearTimeout(poiRenderTimer);
+    poiRenderTimer = setTimeout(renderPois, 120);
   });
 
   /* ---------------- Suche ---------------- */
