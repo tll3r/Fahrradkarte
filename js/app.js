@@ -12,7 +12,7 @@
   /* ---------------- Karte ---------------- */
   const map = L.map('map', {
     center: C.center, zoom: C.zoom, minZoom: C.minZoom, maxZoom: C.maxZoom,
-    maxBounds: C.maxBounds, maxBoundsViscosity: 0.6, preferCanvas: true, zoomControl: false
+    preferCanvas: true, zoomControl: false
   });
   // Feste Position: sonst überlappt die Zoom-Control nach dem Drehen des Geräts die Layer-Control.
   L.control.zoom({ position: 'bottomright' }).addTo(map);

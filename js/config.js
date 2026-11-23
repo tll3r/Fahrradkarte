@@ -3,12 +3,12 @@
  * Farben, Kartenausschnitt und Kategorien lassen sich hier ohne Code-Kenntnisse anpassen.
  */
 window.FK_CONFIG = {
-  // Kartenausschnitt: Bad Schmiedeberg / Wittenberg / Kemberg, südlich der Elbe
-  center: [51.755, 12.55],
-  zoom: 11,
-  minZoom: 9,
+  // Startansicht: zentriert auf Bad Schmiedeberg, keine Scroll-Beschränkung
+  center: [51.6883775, 12.7409236],
+  zoom: 12,
+  minZoom: 3,
   maxZoom: 18,
-  maxBounds: [[51.45, 12.05], [52.00, 13.05]],
+  maxBounds: null,
 
   // Hervorhebung der Region: 30-km-Radius um Bad Schmiedeberg
   region: {
