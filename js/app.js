@@ -39,47 +39,8 @@
   const routePoiGroup = L.layerGroup().addTo(map);
   const highlightLayer = L.layerGroup().addTo(map);
 
-  // 30-km-Region um Bad Schmiedeberg: außerhalb wird abgedunkelt, damit der
-  // Ausschnitt hervorsticht. Der gestrichelte Kreis bleibt als Grenze sichtbar.
+  // Region-Hervorhebung entfernt (war nicht gewünscht): keine Kreis-/Masken-Overlay.
   const regionLayer = L.layerGroup();
-  if (C.region) {
-    const center = L.latLng(C.region.center);
-    // Kreis als Loch in einer großen Fläche (Maskeneffekt).
-    const outer = [
-      [C.maxBounds[0][0], C.maxBounds[0][1]],
-      [C.maxBounds[0][0], C.maxBounds[1][1]],
-      [C.maxBounds[1][0], C.maxBounds[1][1]],
-      [C.maxBounds[1][0], C.maxBounds[0][1]]
-    ];
-    const inner = [];
-    const steps = 72;
-    for (let i = 0; i < steps; i++) {
-      const a = (i / steps) * Math.PI * 2;
-      const dx = (C.region.radius * Math.cos(a)) / (111000 * Math.cos(center.lat * Math.PI / 180));
-      const dy = (C.region.radius * Math.sin(a)) / 111000;
-      inner.push([center.lat + dy, center.lng + dx]);
-    }
-    L.polygon([outer, inner], {
-      color: 'transparent', weight: 0,
-      fillColor: '#1f2a36', fillOpacity: 0.42, interactive: false
-    }).addTo(regionLayer);
-
-    L.circle(C.region.center, {
-      radius: C.region.radius,
-      color: '#6b7a88', weight: 2, dashArray: '7 6', opacity: 0.9,
-      fill: false, interactive: false
-    }).addTo(regionLayer);
-
-    L.marker(C.region.center, {
-      interactive: false,
-      icon: L.divIcon({
-        className: 'region-label',
-        html: '<span>' + esc(C.region.name) + ' · ' + (C.region.radius / 1000) + ' km</span>',
-        iconSize: [190, 24], iconAnchor: [95, 12]
-      })
-    }).addTo(regionLayer);
-    if (C.region.defaultOn) regionLayer.addTo(map);
-  }
 
   /* ---------------- Zustand ---------------- */
   function loadArr(key) {
@@ -319,7 +280,7 @@
       state.routePoiCats.add((f.properties && f.properties.kategorie) || 'eigen');
       pois.forEach((p) => {
         if (!p || typeof p.lat !== 'number' || typeof p.lng !== 'number') return;
-        if (regionFilterActive() && map.distance([p.lat, p.lng], C.region.center) > C.region.radius) return;
+
         const m = L.marker([p.lat, p.lng], {
           icon: L.divIcon({
             className: 'route-poi-icon',
@@ -486,7 +447,6 @@
     const buckets = {};
     C.poiGroups.forEach((g) => { buckets[g.id] = []; });
     allPois().forEach((f) => {
-      if (!poiInRegion(f)) return;
       let key = (f.properties && f.properties.typ) || 'eigen';
       if (!buckets[key]) key = 'eigen';
       buckets[key].push(f);
@@ -578,7 +538,7 @@
   /* ---------------- Suche ---------------- */
   function buildSearchIndex() {
     state.searchables = [];
-    allWays().concat(allPois().filter(poiInRegion)).forEach((f) => {
+    allWays().concat(allPois()).forEach((f) => {
       const name = f.properties?.name;
       if (!name) return;
       const g = f.geometry;
@@ -758,36 +718,10 @@
   $('to-tour').addEventListener('click', () => openPanel('tour'));
   $('to-filter').addEventListener('click', () => openPanel('filter'));
 
-  $('region-toggle').checked = !!(C.region && C.region.defaultOn);
-  if (C.region) {
-    const label = $('region-toggle').closest('.switch-row').querySelector('.switch-text b');
-    if (label) label.textContent = (C.region.radius / 1000) + ' km um ' + C.region.name;
-  } else {
-    $('region-toggle').closest('.switch-row').hidden = true;
-  }
-
-  function regionFilterActive() {
-    return !!(C.region && $('region-toggle').checked);
-  }
-  function poiInRegion(f) {
-    if (!regionFilterActive()) return true;
-    const c = f && f.geometry && f.geometry.coordinates;
-    if (!Array.isArray(c)) return true;
-    const lat = (f.geometry.type === 'Point') ? c[1] : (Array.isArray(c[0]) ? c[Math.floor(c.length / 2)][1] : c[1]);
-    const lng = (f.geometry.type === 'Point') ? c[0] : (Array.isArray(c[0]) ? c[Math.floor(c.length / 2)][0] : c[0]);
-    if (typeof lat !== 'number' || typeof lng !== 'number') return true;
-    return map.distance([lat, lng], C.region.center) <= C.region.radius;
-  }
-
-  $('region-toggle').addEventListener('change', (e) => {
-    if (e.target.checked) { if (!map.hasLayer(regionLayer)) regionLayer.addTo(map); }
-    else if (map.hasLayer(regionLayer)) map.removeLayer(regionLayer);
-    // POI-Bestand an den Kreis koppeln: nur innerhalb sichtbar, wenn der Kreis aktiv ist.
-    renderPois();
-    renderRoutePois();
-    buildSearchIndex();
-    applyFilters();
-  });
+  // Region-Hervorhebung entfernt: Schalter und Abschnitt ausblenden.
+  const regionRow = $('region-toggle') ? $('region-toggle').closest('.switch-row') : null;
+  const regionSection = regionRow ? regionRow.closest('section') : null;
+  if (regionSection) regionSection.hidden = true;
 
   /* ---------------- Eigene POIs ---------------- */
   const state2 = { mode: null, pendingLatLng: null, dialogKind: null };
