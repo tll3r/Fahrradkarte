@@ -885,6 +885,114 @@
     return null;
   }
 
+  /* ---------- GPX / KML Import (Komoot, Strava, Garmin, Outdooractive, …) ---------- */
+
+  function makeWayFeature(name, coords) {
+    const clean = coords.map(U.coord).filter(Boolean);
+    if (clean.length < 2) return null;
+    // Waypoints fürs Editieren auf max. ~60 Punkte reduzieren (sonst wird der Editor träge).
+    const step = Math.max(1, Math.ceil(clean.length / 60));
+    const waypoints = clean.filter((_, i) => i % step === 0 || i === clean.length - 1);
+    let dist = 0;
+    for (let i = 1; i < clean.length; i++) {
+      dist += map.distance([clean[i - 1][1], clean[i - 1][0]], [clean[i][1], clean[i][0]]);
+    }
+    return {
+      type: 'Feature',
+      properties: {
+        name: name || 'Radweg ohne Namen',
+        kategorie: 'eigen', eigen: true,
+        color: U.safeColor(null, C.routeColors[state.ownWays.length % C.routeColors.length]),
+        bikeTypes: [],
+        waypoints: waypoints.map((c) => c.slice()),
+        distance: Math.round(dist),
+        durationMin: null,
+        pois: [],
+        erstellt: new Date().toISOString(),
+        geaendert: new Date().toISOString()
+      },
+      geometry: { type: 'LineString', coordinates: clean }
+    };
+  }
+
+  function makePoiFeature(name, coord) {
+    const c = U.coord(coord);
+    if (!c) return null;
+    return {
+      type: 'Feature',
+      properties: { name: name || 'Ohne Namen', typ: 'eigen', eigen: true, erstellt: new Date().toISOString() },
+      geometry: { type: 'Point', coordinates: c }
+    };
+  }
+
+  function parseGpx(text) {
+    const doc = new DOMParser().parseFromString(text, 'application/xml');
+    if (doc.querySelector('parsererror')) return null;
+    const pois = [], ways = [];
+    const getName = (el) => {
+      const n = el.getElementsByTagName('name')[0];
+      return n ? n.textContent.trim() : '';
+    };
+    const readPts = (el, tag) => Array.from(el.getElementsByTagName(tag)).map((p) => {
+      const lat = parseFloat(p.getAttribute('lat')), lng = parseFloat(p.getAttribute('lon'));
+      return (Number.isFinite(lat) && Number.isFinite(lng)) ? [lng, lat] : null;
+    }).filter(Boolean);
+
+    Array.from(doc.getElementsByTagName('trk')).forEach((trk) => {
+      const coords = readPts(trk, 'trkpt');
+      const w = makeWayFeature(getName(trk) || 'Importierte Tour', coords);
+      if (w) ways.push(w);
+    });
+    Array.from(doc.getElementsByTagName('rte')).forEach((rte) => {
+      const coords = readPts(rte, 'rtept');
+      const w = makeWayFeature(getName(rte) || 'Importierte Route', coords);
+      if (w) ways.push(w);
+    });
+    Array.from(doc.getElementsByTagName('wpt')).forEach((wpt) => {
+      const lat = parseFloat(wpt.getAttribute('lat')), lng = parseFloat(wpt.getAttribute('lon'));
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+      const p = makePoiFeature(getName(wpt) || 'Wegpunkt', [lng, lat]);
+      if (p) pois.push(p);
+    });
+    return { pois, ways };
+  }
+
+  function parseKml(text) {
+    const doc = new DOMParser().parseFromString(text, 'application/xml');
+    if (doc.querySelector('parsererror')) return null;
+    const pois = [], ways = [];
+    const parseCoordText = (s) => s.trim().split(/\s+/).map((tok) => {
+      const parts = tok.split(',').map(Number);
+      return (parts.length >= 2 && Number.isFinite(parts[0]) && Number.isFinite(parts[1])) ? [parts[0], parts[1]] : null;
+    }).filter(Boolean);
+
+    Array.from(doc.getElementsByTagName('Placemark')).forEach((pm) => {
+      const nameEl = pm.getElementsByTagName('name')[0];
+      const name = nameEl ? nameEl.textContent.trim() : '';
+      const ls = pm.getElementsByTagName('LineString')[0];
+      if (ls) {
+        const ce = ls.getElementsByTagName('coordinates')[0];
+        if (ce) {
+          const coords = parseCoordText(ce.textContent);
+          const w = makeWayFeature(name || 'Importierte Tour', coords);
+          if (w) ways.push(w);
+        }
+      }
+      const pt = pm.getElementsByTagName('Point')[0];
+      if (pt) {
+        const ce = pt.getElementsByTagName('coordinates')[0];
+        if (ce) {
+          const coords = parseCoordText(ce.textContent);
+          if (coords.length) {
+            const p = makePoiFeature(name || 'Wegpunkt', coords[0]);
+            if (p) pois.push(p);
+          }
+        }
+      }
+    });
+    return { pois, ways };
+  }
+
   $('file-input').addEventListener('change', (e) => {
     if (!requireEditorClosed()) { e.target.value = ''; return; }
     const file = e.target.files && e.target.files[0];
@@ -892,14 +1000,28 @@
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const json = JSON.parse(reader.result);
-        const features = json.type === 'FeatureCollection' ? json.features : (Array.isArray(json) ? json : []);
-        const addPois = [], addWays = [];
-        (features || []).forEach((f) => {
-          const kind = normalizeImportedFeature(f);
-          if (kind === 'poi') addPois.push(f);
-          else if (kind === 'way') addWays.push(f);
-        });
+        const text = reader.result;
+        const trimmed = text.trim();
+        let addPois = [], addWays = [];
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+          const json = JSON.parse(text);
+          const features = json.type === 'FeatureCollection' ? json.features : (Array.isArray(json) ? json : []);
+          (features || []).forEach((f) => {
+            const kind = normalizeImportedFeature(f);
+            if (kind === 'poi') addPois.push(f);
+            else if (kind === 'way') addWays.push(f);
+          });
+        } else if (/<gpx/i.test(text)) {
+          const r = parseGpx(text);
+          if (!r) throw new Error('GPX');
+          addPois = r.pois; addWays = r.ways;
+        } else if (/<kml/i.test(text)) {
+          const r = parseKml(text);
+          if (!r) throw new Error('KML');
+          addPois = r.pois; addWays = r.ways;
+        } else {
+          throw new Error('Format');
+        }
         const nextPois = state.ownPois.concat(addPois);
         const nextWays = state.ownWays.concat(addWays);
         saveArr(LS_POIS, nextPois);
@@ -909,7 +1031,7 @@
         commitDataChange();
         toast('Importiert: ' + addPois.length + ' POIs, ' + addWays.length + ' Radwege.');
       } catch (err) {
-        toast('Datei konnte nicht als GeoJSON gelesen werden.');
+        toast('Datei konnte nicht gelesen werden (GeoJSON, GPX oder KML erwartet).');
       }
     };
     reader.readAsText(file);

@@ -92,7 +92,7 @@ Falls der Router gerade nicht erreichbar ist, wird vorübergehend eine gerade Ve
 - **Filter** als Legende: 7 Radweg-Kategorien (inkl. zwei Fernradwege), 14 POI-Gruppen. Bänke/Spielplätze sind standardmäßig aus.
 - **Kartenstil**: OpenStreetMap oder OpenTopoMap (Höhenlinien) – Umschalter oben rechts.
 - **📍 POI setzen**: Item auf der Karte platzieren, Name/Typ/Notiz eingeben.
-- **Export/Import**: eigene POIs und Radwege als GeoJSON. Im Browser gespeichert und zusätzlich als Datei nutzbar.
+- **Export/Import**: eigene POIs und Radwege als GeoJSON. Zusätzlich **GPX- und KML-Import** (z. B. aus Komoot, Strava, Garmin, Outdooractive). Im Browser gespeichert und zusätzlich als Datei nutzbar.
 
 ## Eigene Daten dauerhaft in Dateien
 
