@@ -39,14 +39,37 @@
   const routePoiGroup = L.layerGroup().addTo(map);
   const highlightLayer = L.layerGroup().addTo(map);
 
-  // 30-km-Region um Bad Schmiedeberg (per Switch ein-/ausschaltbar)
+  // 30-km-Region um Bad Schmiedeberg: außerhalb wird abgedunkelt, damit der
+  // Ausschnitt hervorsticht. Der gestrichelte Kreis bleibt als Grenze sichtbar.
   const regionLayer = L.layerGroup();
   if (C.region) {
+    const center = L.latLng(C.region.center);
+    // Kreis als Loch in einer großen Fläche (Maskeneffekt).
+    const outer = [
+      [C.maxBounds[0][0], C.maxBounds[0][1]],
+      [C.maxBounds[0][0], C.maxBounds[1][1]],
+      [C.maxBounds[1][0], C.maxBounds[1][1]],
+      [C.maxBounds[1][0], C.maxBounds[0][1]]
+    ];
+    const inner = [];
+    const steps = 72;
+    for (let i = 0; i < steps; i++) {
+      const a = (i / steps) * Math.PI * 2;
+      const dx = (C.region.radius * Math.cos(a)) / (111000 * Math.cos(center.lat * Math.PI / 180));
+      const dy = (C.region.radius * Math.sin(a)) / 111000;
+      inner.push([center.lat + dy, center.lng + dx]);
+    }
+    L.polygon([outer, inner], {
+      color: 'transparent', weight: 0,
+      fillColor: '#1f2a36', fillOpacity: 0.42, interactive: false
+    }).addTo(regionLayer);
+
     L.circle(C.region.center, {
       radius: C.region.radius,
       color: '#6b7a88', weight: 2, dashArray: '7 6', opacity: 0.9,
-      fillColor: '#6b7a88', fillOpacity: 0.22, interactive: false
+      fill: false, interactive: false
     }).addTo(regionLayer);
+
     L.marker(C.region.center, {
       interactive: false,
       icon: L.divIcon({
